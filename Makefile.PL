@@ -10,6 +10,7 @@ WriteMakefile(
 	INSTALLDIRS  => 'site',
 	SIGN         => 1,
 	PL_FILES     => { },
+	EXE_FILES    => [qw(script/isquish)],
 	PREREQ_PM    => {
 		'Test::use::ok' => 0,
 		'Parallel::ForkManager' => 0,

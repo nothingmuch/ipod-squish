@@ -1,0 +1,56 @@
+#!/usr/bin/env perl
+
+use iPod::Squish;
+
+use Memoize;
+use DB_File;
+use File::HomeDir;
+use Path::Class;
+
+$SIG{INT} = sub { exit 1 }; # for DB_File to close nicely
+
+memoize(
+	'iPod::Squish::get_bitrate',
+	NORMALIZER => sub {
+		my ( $self, $file ) = @_;
+		return join ( ":", $file->stringify, -s $file );
+	},
+	SCALAR_CACHE => [ TIE => "DB_File", dir(File::HomeDir->my_home)->file(".isquish_cache")->stringify ],
+	LIST_CACHE   => 'MERGE',
+);
+
+my $ipod = shift;
+
+unless ( $ipod ) {
+	my @ipods = map { dir($_)->parent } glob("/Volumes/*/iPod_Control");
+
+	if ( @ipods == 1 ) {
+		$ipod = $ipods[0];
+	} else {
+		die "Please specify which iPod you'd like to squish.";
+	}
+}
+
+iPod::Squish->new( volume => $ipod )->run; # FIXME MooseX::Getopt?
+
+__END__
+
+=pod
+
+=head1 NAME
+
+isquish - squish your ipod
+
+=head1 SYNOPSIS
+
+	% isquish "/Volumes/My iPod"
+
+=head1 DESCRIPTION
+
+This script uses L<iPod::Squish> to reencode MP3s on an ipod.
+
+MP3 bitrate info will be cached in a file called C<.isquish_cache> in your home
+directory. This is done using L<Memoize> and L<DB_File>.
+
+If no iPod is specified and exactly one is found in /Volumes then that iPod
+will be squished by default.
