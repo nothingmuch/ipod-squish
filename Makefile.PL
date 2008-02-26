@@ -12,6 +12,14 @@ WriteMakefile(
 	PL_FILES     => { },
 	PREREQ_PM    => {
 		'Test::use::ok' => 0,
+		'Parallel::ForkManager' => 0,
+		#'Audio::File' => 0,
+		'MP3::Info' => 0,
+		'FFmpeg::Command' => 0,
+		'Moose' => 0,
+		'MooseX::LogDispatch' => '1.1001',
+		'MooseX::Types::Path::Class' => 0,
+		'Log::Dispatch' => '2.21', # log_and_die
 	},
 );
 
