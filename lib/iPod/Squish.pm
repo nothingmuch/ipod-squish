@@ -102,9 +102,8 @@ sub run {
 sub process_files {
 	my ( $self, @files ) = @_;
 
-	my $i;
-	foreach my $file ( @files ) {
-		$self->process_file( $file, ++$i, scalar(@files) );
+	foreach my $i ( 0 .. $#files ) {
+		$self->process_file( $files[$i], $i, scalar(@files) );
 	}
 
 	if ( my $pm = $self->fork_manager ) {
