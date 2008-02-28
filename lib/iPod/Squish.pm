@@ -227,6 +227,11 @@ Only files with a bitrate over C<target_bitrate> will be converted.
 Currently only MP3 files will be converted and the output format is MP3 as
 well. AAC support would be nice, see L</TODO>.
 
+A tip to sync more data than iTunes is willing is to do it in several steps by
+using a smart playlist and limiting the number of songs in the playlist by the
+number of free megabytes on the player. Then you can run the squishing script,
+and repeat ad nauseum.
+
 =head1 ATTRIBUTES
 
 =over 4
@@ -295,13 +300,6 @@ content. The default is to just print the messages to C<STDERR>.
 I'm not quite sure how to specify varible bitrate for C<ffmpeg>. Should look
 into that.
 
-=item launchd integration
-
-Perhaps make a script to add a launchd service for a given ipod based on the
-dir watching service, so that an iPod is squished automatically. This combined
-with an on-mount watcher and an index of already converted files should allow
-a fairly seamless workflow, even if you don't want to wait after syncing.
-
 =item m4a
 
 Support C<m4a> type AAC files (I don't think ffmpeg allows this, but I'm not
@@ -316,6 +314,18 @@ If not, try to use rewrite library entries, as long as this doesn't affect
 synchronization.
 
 Perhaps look at L<Mac::iPod::DB> for details.
+
+=head1 OSX agent integration
+
+Using an app called Lingon you can easily create an agent that will run every
+time a disk is mounted.
+
+My entry is:
+
+	nice /usr/local/bin/perl -I /Users/nothingmuch/Perl/iPod-Squish/lib /Users/nothingmuch/Perl/iPod-Squish/script/isquish
+
+This is suboptimal because the script might miss some songs that are newly
+synced, but remounting the iPod should take care of that.
 
 =head1 SEE ALSO
 
