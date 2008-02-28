@@ -12,7 +12,7 @@ with qw(MooseX::LogDispatch);
 #use FFmpeg::Command;
 #use Audio::File; # this dep fails if flac fails to build, so we use MP3::Info directly for now
 use MP3::Info;
-use File::Temp qw(:seekable);
+use File::Temp;
 use Parallel::ForkManager;
 use File::Which;
 
