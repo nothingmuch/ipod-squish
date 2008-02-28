@@ -52,6 +52,7 @@ memoize(
 	'iPod::Squish::get_bitrate',
 	NORMALIZER => sub {
 		my ( $self, $file ) = @_;
+		no warnings 'uninitialized'; # in case iTunes deleted a file while we were working
 		return join ( ":", $file->stringify, -s $file );
 	},
 	SCALAR_CACHE => [ TIE => "DB_File", dir(File::HomeDir->my_home)->file(".isquish_cache")->stringify ],
