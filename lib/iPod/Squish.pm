@@ -150,7 +150,6 @@ sub reencode_file {
 sub _reencode_file {
 	my ( $self, $file, $n, $tot ) = @_;
 
-
 	my $size = -s $file;
 
 	$self->logger->log( level => "info", message => "encoding $file ($n/$tot)" );
