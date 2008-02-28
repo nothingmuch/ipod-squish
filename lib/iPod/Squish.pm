@@ -115,9 +115,8 @@ sub process_files {
 sub process_file {
 	my ( $self, $file, $n, $tot ) = @_;
 
-	my $pm = $self->fork_manager;
-
 	if ( $self->get_bitrate($file) > $self->target_bitrate ) {
+		my $pm = $self->fork_manager;
 
 		$self->logger->log( level => "info", message => "encoding $file ($n/$tot)" );
 
