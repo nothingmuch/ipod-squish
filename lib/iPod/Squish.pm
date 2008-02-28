@@ -14,6 +14,13 @@ use FFmpeg::Command;
 use MP3::Info;
 use File::Temp qw(:seekable);
 use Parallel::ForkManager;
+use File::Which;
+
+has use_lame => (
+	isa => "Bool",
+	is  => "rw",
+	default => sub { defined which("lame") },
+);
 
 has volume => (
 	isa => "Path::Class::Dir",
@@ -118,25 +125,33 @@ sub reencode_file {
 	# get a race condition
 	return unless $file->basename =~ /^[A-Z]{4}(?: \d+)?\.mp3$/;
 
-	my $cmd = FFmpeg::Command->new;
-
-	$cmd->input_options({ file => $file->stringify });
-
 	# make the tempfile at the TLD of the iPod so we can rename() later
 	my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => ".mp3", DIR => $self->volume );
 
-	$cmd->output_options({
-		format         => "mp3",
-		audio_codec    => "mp3",
-		audio_bit_rate => $self->target_bitrate,
-		$self->ffmpeg_output_options,
-		file           => $tmp->filename,
-	});
+	if ( do {
+		if ( $self->use_lame ) {
+			system ( qw(lame --silent -h --preset), $self->target_bitrate, $file->stringify, $tmp->filename ) == 0;
+		} else {
+			my $cmd = FFmpeg::Command->new;
 
-	if ( $cmd->exec ) {
+			$cmd->input_options({ file => $file->stringify });
+
+			$cmd->output_options({
+				format         => "mp3",
+				audio_codec    => "mp3",
+				audio_bit_rate => $self->target_bitrate,
+				$self->ffmpeg_output_options,
+				file           => $tmp->filename,
+			});
+
+			$cmd->exec;
+		}
+	} ) {
 		$self->logger->info("replacing $file");
 		rename( $tmp->filename, $file )
-			or $self->logger->log_and_die( level => "error", message => "Can't rename $tmp to $file" );
+			or $self->logger->error("Can't rename $tmp to $file" );
+	} else {
+		$self->logger->error("error in conversion of $file: $?");
 	}
 }
 __PACKAGE__
@@ -147,7 +162,8 @@ __END__
 
 =head1 NAME
 
-iPod::Squish - Convert songs on an iPod in place using L<FFmpeg::Command>.
+iPod::Squish - Convert songs on an iPod in place using lame or
+L<FFmpeg::Command>.
 
 =head1 SYNOPSIS
 
@@ -162,8 +178,8 @@ iPod::Squish - Convert songs on an iPod in place using L<FFmpeg::Command>.
 
 =head1 DESCRIPTION
 
-This module uses L<FFmpeg::Command> to perform automatic conversion of songs on
-an iPod after they've been synced.
+This module uses F<lame> or L<FFmpeg::Command> to perform automatic conversion
+of songs on an iPod after they've been synced.
 
 Since most headphones are too crappy to notice converting songs to a lower
 bitrate is often convenient to save size.
@@ -187,14 +203,20 @@ The bitrate to encode to.
 
 Only songs whose bitrate is higher than this will be encoded.
 
+=item use_lame
+
+Use the C<lame> command directly instead of L<FFmpeg::Command>.
+
+Defualts to true if C<lame> is in the path, because it's more flexible than
+lame through ffmpeg.
+
+Note that using lame is generally slower for the same C<target_bitrate> because
+of the C<-h> flag passed to lame.
+
 =item jobs
 
-The number of parallel ffmpeg instances to run. Defaults to 2. Useful for multi
+The number of parallel lame instances to run. Defaults to 2. Useful for multi
 processor or multi core machines.
-
-=item ffmpeg_output_options
-
-Additional output options for C<FFmpeg::Command>.
 
 =back
 
