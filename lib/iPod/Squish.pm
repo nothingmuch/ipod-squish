@@ -30,7 +30,7 @@ has volume => (
 	coerce   => 1,
 );
 
-has mp3_dir => (
+has music_dir => (
 	isa => "Path::Class::Dir",
 	is  => "ro",
 	lazy => 1,
@@ -91,7 +91,7 @@ sub run {
 
 	my @files;
 
-	$self->mp3_dir->recurse( callback => sub {
+	$self->music_dir->recurse( callback => sub {
 		my $file = shift;
 		push @files, $file if -f $file;
 	});
