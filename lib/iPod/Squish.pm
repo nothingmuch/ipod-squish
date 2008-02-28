@@ -335,8 +335,8 @@ Perhaps look at L<Mac::iPod::DB> for details.
 
 =head1 OSX agent integration
 
-Using an app called Lingon you can easily create an agent that will run every
-time a disk is mounted.
+Using an app called Lingon (L<http://lingon.sourceforge.net/>) you can easily
+create an agent that will run every time a disk is mounted.
 
 My entry is:
 
@@ -344,6 +344,15 @@ My entry is:
 
 Because the script loops until no more songs are converted, and copying is
 likely faster than encoding it should generally Just Work™ automatically.
+
+Make sure you have F<lame> or F<ffmpeg> in the path, and if you want lame to
+STFU then set TERM to something as well.
+
+This can be done by using
+
+	env TERM=xterm-color PATH=...
+
+to actually run the script.
 
 =head1 SEE ALSO
 
