@@ -31,6 +31,8 @@ unless ( $ipod ) {
 	}
 }
 
+chdir $ipod; # force it to stay mounted
+
 { iPod::Squish->new( volume => $ipod )->run && redo }; # FIXME MooseX::Getopt?
 
 __END__
