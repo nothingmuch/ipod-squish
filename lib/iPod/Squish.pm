@@ -14,7 +14,7 @@ with qw(MooseX::LogDispatch);
 use Number::Bytes::Human qw(format_bytes);
 use MP3::Info;
 use File::Temp;
-use Parallel::ForkManager;
+#use Parallel::ForkManager;
 use File::Which;
 
 has use_lame => (
@@ -65,6 +65,7 @@ sub _build_fork_manager {
 
 	return unless $jobs or $jobs <= 1;
 
+	require Parallel::ForkManager;
 	return Parallel::ForkManager->new( $jobs );
 }
 
