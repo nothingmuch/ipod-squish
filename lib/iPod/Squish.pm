@@ -212,6 +212,8 @@ __END__
 
 =pod
 
+=encoding utf8
+
 =head1 NAME
 
 iPod::Squish - Convert songs on an iPod in place using lame or
@@ -338,8 +340,8 @@ My entry is:
 
 	nice /usr/local/bin/perl -I /Users/nothingmuch/Perl/iPod-Squish/lib /Users/nothingmuch/Perl/iPod-Squish/script/isquish
 
-This is suboptimal because the script might miss some songs that are newly
-synced, but remounting the iPod should take care of that.
+Because the script loops until no more songs are converted, and copying is
+likely faster than encoding it should generally Just Work™ automatically.
 
 =head1 SEE ALSO
 

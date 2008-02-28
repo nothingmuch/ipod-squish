@@ -31,7 +31,7 @@ unless ( $ipod ) {
 	}
 }
 
-iPod::Squish->new( volume => $ipod )->run; # FIXME MooseX::Getopt?
+{ iPod::Squish->new( volume => $ipod )->run && redo }; # FIXME MooseX::Getopt?
 
 __END__
 
