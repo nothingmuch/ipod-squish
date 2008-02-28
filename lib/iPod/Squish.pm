@@ -11,6 +11,7 @@ with qw(MooseX::LogDispatch);
 
 #use FFmpeg::Command;
 #use Audio::File; # this dep fails if flac fails to build, so we use MP3::Info directly for now
+use Number::Bytes::Human qw(format_bytes);
 use MP3::Info;
 use File::Temp;
 use Parallel::ForkManager;
@@ -88,24 +89,37 @@ sub get_bitrate {
 sub run {
 	my $self = shift;
 
-	my $pm = $self->fork_manager;
+	my @files;
 
 	$self->mp3_dir->recurse( callback => sub {
 		my $file = shift;
-		$self->process_file( $file ) if -f $file;
+		push @files, $file if -f $file;
 	});
 
-	$pm->wait_all_children if $pm;
+	$self->process_files(@files);
+}
+
+sub process_files {
+	my ( $self, @files ) = @_;
+
+	my $i;
+	foreach my $file ( @files ) {
+		$self->process_file( $file, ++$i, scalar(@files) );
+	}
+
+	if ( my $pm = $self->fork_manager ) {
+		$pm->wait_all_children;
+	}
 }
 
 sub process_file {
-	my ( $self, $file ) = @_;
+	my ( $self, $file, $n, $tot ) = @_;
 
 	my $pm = $self->fork_manager;
 
 	if ( $self->get_bitrate($file) > $self->target_bitrate ) {
 
-		$self->logger->info("encoding $file");
+		$self->logger->log( level => "info", message => "encoding $file ($n/$tot)" );
 
 		$pm->start and return if $pm;
 
@@ -114,7 +128,7 @@ sub process_file {
 		$pm->finish if $pm;
 
 	} else {
-		$self->logger->info("skipping $file");
+		$self->logger->log( level => "info", message => "skipping $file ($n/$tot)" );
 	}
 }
 
@@ -125,15 +139,22 @@ sub reencode_file {
 	# get a race condition
 	return unless $file->basename =~ /^[A-Z]{4}(?: \d+)?\.mp3$/;
 
+	my $size = -s $file;
+
 	# make the tempfile at the TLD of the iPod so we can rename() later
 	my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => ".mp3", DIR => $self->volume );
 
 	if ( $self->run_encoder( $file->stringify, $tmp->filename ) ) {
-		$self->logger->info("replacing $file");
+		my $new_size = -s $tmp->filename;
+		my $saved = $size - $new_size;
+
+		$self->logger->log( level => "info", message => sprintf "renaming %s, saved %s (%.2f%%)", $file, format_bytes($saved), ( $saved / $size ) * 100 );
+
 		rename( $tmp->filename, $file )
-			or $self->logger->error("Can't rename $tmp to $file" );
+			or $self->logger->log( level => "error", message => "Can't rename $tmp to $file" );
+
 	} elsif ( ( $? & 127 ) != 2 ) { # SIGINT
-		$self->logger->error("error in conversion of $file: $?");
+		$self->logger->log( level => "error", message => "error in conversion of $file: $?" );
 	}
 }
 
