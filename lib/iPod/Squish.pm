@@ -17,6 +17,8 @@ use File::Temp;
 #use Parallel::ForkManager;
 use File::Which;
 
+has '+use_logger_singleton' => ( default => 1 );
+
 has use_lame => (
 	isa => "Bool",
 	is  => "rw",
