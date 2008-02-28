@@ -128,25 +128,7 @@ sub reencode_file {
 	# make the tempfile at the TLD of the iPod so we can rename() later
 	my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => ".mp3", DIR => $self->volume );
 
-	if ( do {
-		if ( $self->use_lame ) {
-			system ( qw(lame --silent -h --preset), $self->target_bitrate, $file->stringify, $tmp->filename ) == 0;
-		} else {
-			my $cmd = FFmpeg::Command->new;
-
-			$cmd->input_options({ file => $file->stringify });
-
-			$cmd->output_options({
-				format         => "mp3",
-				audio_codec    => "mp3",
-				audio_bit_rate => $self->target_bitrate,
-				$self->ffmpeg_output_options,
-				file           => $tmp->filename,
-			});
-
-			$cmd->exec;
-		}
-	} ) {
+	if ( $self->run_encoder( $file->stringify, $tmp->filename ) ) {
 		$self->logger->info("replacing $file");
 		rename( $tmp->filename, $file )
 			or $self->logger->error("Can't rename $tmp to $file" );
@@ -156,6 +138,41 @@ sub reencode_file {
 		}
 	}
 }
+
+sub run_encoder {
+	my ( $self, @args ) = @_;
+
+	if ( $self->use_lame ) {
+		$self->run_lame(@args);
+	} else {
+		$self->run_ffmpeg(@args);
+	}
+}
+
+sub run_lame {
+	my ( $self, $input, $output ) = @_;
+
+	system ( qw(lame --silent -h --preset), $self->target_bitrate, $input, $output ) == 0;
+}
+
+sub run_ffmpeg {
+	my ( $self, $input, $output ) = @_;
+
+	my $cmd = FFmpeg::Command->new;
+
+	$cmd->input_options({ file => $input });
+
+	$cmd->output_options({
+		format         => "mp3",
+		audio_codec    => "mp3",
+		audio_bit_rate => $self->target_bitrate,
+		$self->ffmpeg_output_options,
+		file           => $output
+	});
+
+	$cmd->exec;
+}
+
 __PACKAGE__
 
 __END__
