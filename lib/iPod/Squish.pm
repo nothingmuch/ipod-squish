@@ -163,7 +163,7 @@ sub _reencode_file {
 		my $new_size = -s $tmp->filename;
 		my $saved = $size - $new_size;
 
-		$self->logger->log( level => "notice", message => sprintf "renaming %s, saved %s (%.2f%%)", $file, format_bytes($saved), ( $saved / $size ) * 100 );
+		$self->logger->log( level => "notice", message => sprintf "renaming %s, saved %s (%.2f%%) ($n/$tot)", $file, format_bytes($saved), ( $saved / $size ) * 100 );
 
 		rename( $tmp->filename, $file )
 			or $self->logger->log( level => "error", message => "Can't rename $tmp to $file" );
