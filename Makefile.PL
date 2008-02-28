@@ -22,7 +22,6 @@ WriteMakefile(
 		'Moose' => 0,
 		'MooseX::LogDispatch' => '1.1001',
 		'MooseX::Types::Path::Class' => 0,
-		'Log::Dispatch' => '2.21', # log_and_die
 	},
 );
 
