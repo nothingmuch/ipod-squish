@@ -111,7 +111,7 @@ sub process_files {
 		push @need_encoding, $files[$i] if $self->needs_encoding( $files[$i], $i + 1, scalar(@files) );
 	}
 
-	foreach my $i ( 0 .. $#files ) {
+	foreach my $i ( 0 .. $#need_encoding ) {
 		$self->reencode_file($need_encoding[$i], $i + 1, scalar(@need_encoding));
 	}
 
