@@ -151,7 +151,9 @@ sub reencode_file {
 		rename( $tmp->filename, $file )
 			or $self->logger->error("Can't rename $tmp to $file" );
 	} else {
-		$self->logger->error("error in conversion of $file: $?");
+		unless ( ( $? & 127 ) == 2 ) { # SIGINT
+			$self->logger->error("error in conversion of $file: $?");
+		}
 	}
 }
 __PACKAGE__
