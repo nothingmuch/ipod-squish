@@ -103,13 +103,17 @@ sub run {
 sub process_files {
 	my ( $self, @files ) = @_;
 
+	my $count;
+
 	foreach my $i ( 0 .. $#files ) {
-		$self->process_file( $files[$i], $i, scalar(@files) );
+		$count++ if $self->process_file( $files[$i], $i, scalar(@files) );
 	}
 
 	if ( my $pm = $self->fork_manager ) {
 		$pm->wait_all_children;
 	}
+
+	return $count;
 }
 
 sub process_file {
@@ -130,8 +134,11 @@ sub process_file {
 
 		$pm->finish if $pm;
 
+		return 1;
 	} else {
 		$self->logger->log( level => "info", message => "skipping $file ($n/$tot), " . ( $bitrate ? "bitrate is $bitrate" : "error reading bitrate" ) );
+
+		return;
 	}
 }
 
