@@ -115,10 +115,14 @@ sub process_files {
 sub process_file {
 	my ( $self, $file, $n, $tot ) = @_;
 
-	if ( $self->get_bitrate($file) > $self->target_bitrate ) {
+	# itunes keep files in their original name while copying, this way we don't
+	# get a race condition
+	return unless $file->basename =~ /^[A-Z]{4}(?: \d+)?\.mp3$/;
+
+	if ( ( my $bitrate = $self->get_bitrate($file) ) > $self->target_bitrate ) {
 		my $pm = $self->fork_manager;
 
-		$self->logger->log( level => "info", message => "encoding $file ($n/$tot)" );
+		$self->logger->log( level => "info", message => "encoding $file ($n/$tot), bitrate is $bitrate" );
 
 		$pm->start and return if $pm;
 
@@ -127,16 +131,12 @@ sub process_file {
 		$pm->finish if $pm;
 
 	} else {
-		$self->logger->log( level => "info", message => "skipping $file ($n/$tot)" );
+		$self->logger->log( level => "info", message => "skipping $file ($n/$tot), " . ( $bitrate ? "bitrate is $bitrate" : "error reading bitrate" ) );
 	}
 }
 
 sub reencode_file {
 	my ( $self, $file ) = @_;
-
-	# itunes keep files in their original name while copying, this way we don't
-	# get a race condition
-	return unless $file->basename =~ /^[A-Z]{4}(?: \d+)?\.mp3$/;
 
 	my $size = -s $file;
 
