@@ -103,20 +103,24 @@ sub run {
 sub process_files {
 	my ( $self, @files ) = @_;
 
-	my $count;
+	my @need_encoding;
 
 	foreach my $i ( 0 .. $#files ) {
-		$count++ if $self->process_file( $files[$i], $i, scalar(@files) );
+		push @need_encoding, $files[$i] if $self->needs_encoding( $files[$i], $i, scalar(@files) );
+	}
+
+	foreach my $i ( 0 .. $#files ) {
+		$self->reencode_file($need_encoding[$i], $i, scalar(@need_encoding));
 	}
 
 	if ( my $pm = $self->fork_manager ) {
 		$pm->wait_all_children;
 	}
 
-	return $count;
+	return @need_encoding;
 }
 
-sub process_file {
+sub needs_encoding {
 	my ( $self, $file, $n, $tot ) = @_;
 
 	# itunes keep files in their original name while copying, this way we don't
@@ -124,28 +128,32 @@ sub process_file {
 	return unless $file->basename =~ /^[A-Z]{4}(?: \d+)?\.mp3$/;
 
 	if ( ( my $bitrate = $self->get_bitrate($file) ) > $self->target_bitrate ) {
-		my $pm = $self->fork_manager;
-
-		$self->logger->log( level => "info", message => "encoding $file ($n/$tot), bitrate is $bitrate" );
-
-		$pm->start and return if $pm;
-
-		$self->reencode_file($file);
-
-		$pm->finish if $pm;
-
+		$self->logger->log( level => "info", message => "queueing $file ($n/$tot), bitrate is $bitrate" );
 		return 1;
 	} else {
 		$self->logger->log( level => "info", message => "skipping $file ($n/$tot), " . ( $bitrate ? "bitrate is $bitrate" : "error reading bitrate" ) );
-
 		return;
 	}
 }
 
 sub reencode_file {
-	my ( $self, $file ) = @_;
+	my ( $self, @args ) = @_;
+
+	my $pm = $self->fork_manager;
+	$pm->start and return if $pm;
+
+	$self->_reencode_file(@args);
+
+	$pm->finish if $pm;
+}
+
+sub _reencode_file {
+	my ( $self, $file, $n, $tot ) = @_;
+
 
 	my $size = -s $file;
+
+	$self->logger->log( level => "info", message => "encoding $file ($n/$tot)" );
 
 	# make the tempfile at the TLD of the iPod so we can rename() later
 	my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => ".mp3", DIR => $self->volume );
