@@ -3,7 +3,7 @@
 package iPod::Squish;
 use Moose;
 
-our $VERSION = "0.01";
+our $VERSION = "0.02";
 
 use MooseX::Types::Path::Class;
 
