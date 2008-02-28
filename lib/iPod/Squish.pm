@@ -9,7 +9,7 @@ use MooseX::Types::Path::Class;
 
 with qw(MooseX::LogDispatch);
 
-use FFmpeg::Command;
+#use FFmpeg::Command;
 #use Audio::File; # this dep fails if flac fails to build, so we use MP3::Info directly for now
 use MP3::Info;
 use File::Temp qw(:seekable);
@@ -158,6 +158,7 @@ sub run_lame {
 sub run_ffmpeg {
 	my ( $self, $input, $output ) = @_;
 
+	require FFmpeg::Command;
 	my $cmd = FFmpeg::Command->new;
 
 	$cmd->input_options({ file => $input });
