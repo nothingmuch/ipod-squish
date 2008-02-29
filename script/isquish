@@ -78,6 +78,9 @@ Log::Dispatch::Config->instance->notice("squishing $ipod");
 
 { iPod::Squish->new( volume => $ipod )->run && redo }; # FIXME MooseX::Getopt?
 
+Log::Dispatch::Config->instance->notice("finished squishing $ipod");
+
+
 __END__
 
 =pod
