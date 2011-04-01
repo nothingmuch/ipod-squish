@@ -26,6 +26,12 @@ use File::Which;
 
 has '+use_logger_singleton' => ( default => 1 );
 
+has minimum_saving => (
+	isa => Int,
+	is  => "ro",
+	default => 256 * 1024,
+);
+
 has use_lame => (
 	isa => Bool,
 	is  => "rw",
@@ -160,10 +166,17 @@ sub needs_encoding {
 	# afterwords, this way we don't get a race condition
 	return if $self->ipod_filename_mangling and $file->basename !~ /^[A-Z]{4}(?: \d+)?\.mp3$/;
 
+	my $bitrate = $self->get_bitrate($file);
 
-	if ( ( my $bitrate = $self->get_bitrate($file) ) > $self->target_bitrate ) {
-		$self->logger->log( level => "info", message => "queueing $file ($n/$tot), bitrate is $bitrate" );
-		return 1;
+	if (
+		# make sure there is enough of a bitrate different
+		$bitrate > ( 1.05 * $self->target_bitrate )
+			and
+		# and make sure the estimated savings in bytes is sensible
+		( ( ( $bitrate - $self->target_bitrate ) / $bitrate ) * -s $file ) >= $self->minimum_saving
+	) {
+		$self->logger->log( level => "info", message => "queueing $file ($n/$tot), bitrate is $bitrate, estimated saving " . format_bytes( ( ( $bitrate - $self->target_bitrate ) / $bitrate ) * -s $file ) );
+		return $bitrate;
 	} else {
 		$self->logger->log( level => "info", message => "skipping $file ($n/$tot), " . ( $bitrate ? "bitrate is $bitrate" : "error reading bitrate" ) );
 		return;
