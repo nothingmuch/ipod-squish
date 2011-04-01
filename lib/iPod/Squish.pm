@@ -8,7 +8,11 @@ our $VERSION = "0.02";
 use MooseX::Types::Moose qw(Bool Int Undef HashRef);
 use MooseX::Types::Path::Class qw(Dir);
 
-with qw(MooseX::LogDispatch);
+with qw(
+	MooseX::Getopt::Dashes
+	MooseX::Runnable
+	MooseX::LogDispatch
+);
 
 #use FFmpeg::Command;
 #use Audio::File; # this dep fails if flac fails to build, so we use MP3::Info directly for now
