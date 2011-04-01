@@ -26,6 +26,7 @@ WriteMakefile(
 		'MooseX::Types::Moose' => 0,
 		'MooseX::Getopt' => 0,
 		'MooseX::Runnable' => 0,
+		'Try::Tiny' => 0,
 	},
 );
 

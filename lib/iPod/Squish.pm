@@ -14,6 +14,7 @@ with qw(
 	MooseX::LogDispatch
 );
 
+use Carp;
 #use FFmpeg::Command;
 #use Audio::File; # this dep fails if flac fails to build, so we use MP3::Info directly for now
 use Number::Bytes::Human qw(format_bytes);
@@ -37,14 +38,34 @@ has volume => (
 	coerce   => 1,
 );
 
+has ipod_filename_mangling => (
+	isa => Bool,
+	is  => "ro",
+	lazy => 1,
+	default => sub {
+		my $self = shift;
+		$self->music_dir =~ /iPod_Control/;
+	},
+);
+
 has music_dir => (
 	isa => Dir,
 	is  => "ro",
 	lazy => 1,
 	default => sub {
 		my $self = shift;
-		$self->volume->subdir( qw(iPod_Control Music) );
+
+		my $ipod = $self->volume->subdir( qw(iPod_Control Music) );
+
+		return $ipod if -d $ipod;
+
+		my $generic = $self->volume->subdir("Music");
+
+		return $generic if -d $generic;
+
+		croak "Can't guess music directory, please specify --music-dir";
 	},
+	coerce => 1,
 );
 
 has target_bitrate => (
@@ -94,6 +115,11 @@ sub get_bitrate {
 	return $info->{BITRATE} || 0;
 }
 
+sub BUILD {
+	# Early build
+	shift->music_dir;
+}
+
 sub run {
 	my $self = shift;
 
@@ -130,9 +156,10 @@ sub process_files {
 sub needs_encoding {
 	my ( $self, $file, $n, $tot ) = @_;
 
-	# itunes keep files in their original name while copying, this way we don't
-	# get a race condition
-	return unless $file->basename =~ /^[A-Z]{4}(?: \d+)?\.mp3$/;
+	# itunes keep files in their original name during copying and get renamed
+	# afterwords, this way we don't get a race condition
+	return if $self->ipod_filename_mangling and $file->basename !~ /^[A-Z]{4}(?: \d+)?\.mp3$/;
+
 
 	if ( ( my $bitrate = $self->get_bitrate($file) ) > $self->target_bitrate ) {
 		$self->logger->log( level => "info", message => "queueing $file ($n/$tot), bitrate is $bitrate" );

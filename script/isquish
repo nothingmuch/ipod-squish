@@ -41,6 +41,7 @@ use warnings;
 
 use iPod::Squish;
 
+use Try::Tiny;
 use Memoize;
 use DB_File;
 use File::HomeDir;
@@ -59,26 +60,29 @@ memoize(
 	LIST_CACHE   => 'MERGE',
 );
 
-my $ipod = shift;
-
-unless ( $ipod ) {
-	my @ipods = map { dir($_)->parent } glob("/Volumes/*/iPod_Control");
-
-	if ( @ipods == 1 ) {
-		$ipod = $ipods[0];
-	} else {
-		die "Please specify which iPod you'd like to squish.";
+my $obj = try {
+	iPod::Squish->new_with_options
+} catch {
+	if ( $ARGV[0] and $ARGV[0] !~ /^-/ ) {
+		unshift @ARGV, '--volume';
+	} elsif ( my @player = map { dir($_)->parent } glob("/Volumes/*/iPod_Control"), glob("/Volumes/*/Music") ) {
+		if ( @player == 1 ) {
+			Log::Dispatch::Config->instance->notice("Guessing player is $player[0]");
+			push @ARGV, '--volume' => $player[0];
+		}
 	}
-}
 
-chdir $ipod; # force it to stay mounted
+	iPod::Squish->new_with_options;
+};
 
+Log::Dispatch::Config->instance->notice("squishing ", $obj->volume || $obj->music_dir);
 
-Log::Dispatch::Config->instance->notice("squishing $ipod");
+# Force it to stay mounted
+chdir $obj->music_dir;
 
-{ iPod::Squish->new( volume => $ipod )->run && redo }; # FIXME MooseX::Getopt?
+{ $obj->run && redo };
 
-Log::Dispatch::Config->instance->notice("finished squishing $ipod");
+Log::Dispatch::Config->instance->notice("finished squishing ", $obj->volume || $obj->music_dir);
 
 
 __END__
