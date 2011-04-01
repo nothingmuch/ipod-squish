@@ -116,7 +116,7 @@ sub get_bitrate {
 	# for when we support more than just MP3s
 	#( Audio::File->new($file->stringify) || return 0 )->audio_properties->bitrate;
 
-	my $info = get_mp3info( $file->stringify ) or return 0;
+	my $info = get_mp3info( "$file" ) or return 0;
 
 	return $info->{BITRATE} || 0;
 }
