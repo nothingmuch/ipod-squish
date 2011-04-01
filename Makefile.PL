@@ -22,6 +22,7 @@ WriteMakefile(
 		'Moose' => 0,
 		'MooseX::LogDispatch' => '1.1001',
 		'MooseX::Types::Path::Class' => 0,
+		'MooseX::Types::Moose' => 0,
 	},
 );
 

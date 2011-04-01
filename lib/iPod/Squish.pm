@@ -5,7 +5,8 @@ use Moose;
 
 our $VERSION = "0.02";
 
-use MooseX::Types::Path::Class;
+use MooseX::Types::Moose qw(Bool Int Undef HashRef);
+use MooseX::Types::Path::Class qw(Dir);
 
 with qw(MooseX::LogDispatch);
 
@@ -20,20 +21,19 @@ use File::Which;
 has '+use_logger_singleton' => ( default => 1 );
 
 has use_lame => (
-	isa => "Bool",
+	isa => Bool,
 	is  => "rw",
 	default => sub { defined which("lame") },
 );
 
 has volume => (
-	isa => "Path::Class::Dir",
+	isa => Dir,
 	is  => "ro",
-	required => 1,
 	coerce   => 1,
 );
 
 has music_dir => (
-	isa => "Path::Class::Dir",
+	isa => Dir,
 	is  => "ro",
 	lazy => 1,
 	default => sub {
@@ -43,13 +43,13 @@ has music_dir => (
 );
 
 has target_bitrate => (
-	isa => "Int",
+	isa => Int,
 	is  => "ro",
 	default => 128,
 );
 
 has jobs => (
-	isa => "Int|Undef",
+	isa => Int|Undef,
 	is  => "ro",
 	default => 2,
 );
@@ -72,7 +72,7 @@ sub _build_fork_manager {
 }
 
 has ffmpeg_output_options => (
-	isa => "HashRef",
+	isa => HashRef,
 	is  => "ro",
 	default    => sub { {} },
 	auto_deref => 1,
