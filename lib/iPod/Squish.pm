@@ -144,9 +144,14 @@ sub process_files {
 
 	my @need_encoding;
 
+	my %bitrate;
 	foreach my $i ( 0 .. $#files ) {
-		push @need_encoding, $files[$i] if $self->needs_encoding( $files[$i], $i + 1, scalar(@files) );
+		if ( my $bitrate = $self->needs_encoding( $files[$i], $i + 1, scalar(@files) ) ) {
+			$bitrate{$files[$i]} = $bitrate;
+			push @need_encoding, $files[$i];
+		}
 	}
+	@need_encoding = sort { $bitrate{$b} <=> $bitrate{$a} or $a cmp $b } @need_encoding;
 
 	foreach my $i ( 0 .. $#need_encoding ) {
 		$self->reencode_file($need_encoding[$i], $i + 1, scalar(@need_encoding));
