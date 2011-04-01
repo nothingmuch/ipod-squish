@@ -17,7 +17,8 @@ with qw(
 #use FFmpeg::Command;
 #use Audio::File; # this dep fails if flac fails to build, so we use MP3::Info directly for now
 use Number::Bytes::Human qw(format_bytes);
-use MP3::Info;
+use MP3::Info qw(get_mp3info);
+use MP3::Tag;
 use File::Temp;
 #use Parallel::ForkManager;
 use File::Which;
@@ -177,14 +178,36 @@ sub _reencode_file {
 	}
 }
 
+sub copy_tags {
+	my ( $self, $from, $to ) = @_;
+
+	my $from_tag = MP3::Tag->new($from);
+	$from_tag->get_tags;
+
+	my $to_tag = MP3::Tag->new($to);
+
+	if ( $from_tag->copy_id3v2_frames($to_tag, 'delete') ) {
+		$to_tag->{ID3v2}->write_tag;
+	} else {
+		if ( exists $from_tag->{ID3v1} ) {
+			my $to_id3v1 = $to_tag->new_tag("ID3v1");
+
+			$to_id3v1->all( $from_tag->{ID3v1}->all );
+			$to_id3v1->write_tag;
+		}
+	}
+}
+
 sub run_encoder {
-	my ( $self, @args ) = @_;
+	my ( $self, $in, $out, @args ) = @_;
 
 	if ( $self->use_lame ) {
-		$self->run_lame(@args);
+		$self->run_lame($in, $out, @args);
 	} else {
-		$self->run_ffmpeg(@args);
+		$self->run_ffmpeg($in, $out, @args);
 	}
+
+	$self->copy_tags($in, $out);
 }
 
 sub run_lame {

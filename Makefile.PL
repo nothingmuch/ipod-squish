@@ -18,6 +18,7 @@ WriteMakefile(
 		'Number::Bytes::Human' => 0,
 		'File::Which' => 0,
 		'MP3::Info' => 0,
+		'MP3::Tag' => 0,
 		'FFmpeg::Command' => 0,
 		'Moose' => 0,
 		'MooseX::LogDispatch' => '1.1001',
